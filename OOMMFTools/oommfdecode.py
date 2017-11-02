@@ -1,4 +1,4 @@
-
+#! /usr/bin/env python
 """
 OOMMFDecode
 Copyright (C) 2010  Mark Mascaro
@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import numpy as np
 import scipy as sp
 import scipy.io as spio
-import os, wx, struct
+import os, struct
 import cPickle as pickle
 from fnameutil import filterOnExtensions
 from collections import defaultdict
@@ -34,6 +34,7 @@ import time
 
 LASTPATH = os.getcwd()
 if __name__ == "__main__":
+        import wx
 	#app = wx.App(None)
 	#app = wx.App(redirect=True)
 	app = wx.App(redirect=True, filename="oommfdecode.log")
@@ -42,169 +43,169 @@ if __name__ == "__main__":
 # GUI #
 #######
 
-class MainFrame(wx.Frame):
-    def __init__(self, manager=None):
-        wx.Frame.__init__(self, None, -1, "OOMMFDecode 0.8", size=(340,400))
+## class MainFrame(wx.Frame):
+##     def __init__(self, manager=None):
+##         wx.Frame.__init__(self, None, -1, "OOMMFDecode 0.8", size=(340,400))
+## 
+##         BigFont = wx.Font(16, wx.FONTFAMILY_DEFAULT, style=wx.NORMAL, weight=wx.FONTWEIGHT_BOLD)
+##         TinyFont = wx.Font(8, wx.FONTFAMILY_DEFAULT, style=wx.NORMAL, weight=wx.FONTWEIGHT_NORMAL)
+## 
+##         self.dt = OOMMFSelectiveTarget(self)
+##         self.SetDropTarget(self.dt)
+## 	self.manager = manager
+## 
+## 	self.Bind(wx.EVT_CLOSE, self.onClose)
+## 
+##         #A very simple menubar
+##         menubar = wx.MenuBar()
+##         about = wx.Menu()
+##         about.Append(999, 'About', 'Program information and license')
+##         menubar.Append(about, "About")
+##         self.SetMenuBar(menubar)
+## 
+##         self.Bind(wx.EVT_MENU, self.showAbout, id=999)
+## 
+##         #NOW we can deal with actual GUI stuff - store a reference for forced resize, if it comes up
+##         panel = wx.Panel(self, -1)
+##         self.panel = panel
+## 
+##         sizer = wx.BoxSizer(wx.VERTICAL)
+## 
+##         titleText = wx.StaticText(panel, -1, "OMF File Decoding")
+##         titleText.SetFont(BigFont)
+##         sizer.Add(titleText, 0, wx.ALIGN_CENTER | wx.TOP, 24)
+## 
+##         sizer.Add(wx.StaticLine(panel, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 18)
+## 
+##         self.doNumpy = wx.CheckBox(panel, -1, "Create pickled numpy")
+##         sizer.Add(self.doNumpy, 0, wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL)
+## 
+##         self.doMATLAB = wx.CheckBox(panel, -1, "Create MATLAB data")
+##         sizer.Add(self.doMATLAB, 0, wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL)
+## 
+##         sizer.Add(wx.StaticLine(panel, -1), 0, wx.EXPAND | wx.TOP, 18)
+## 
+##         ins = wx.StaticText(panel, -1, "Drop OOMMF Files Here!")
+##         ins.SetFont(BigFont)
+##         sizer.Add(ins, 0, wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM | wx.TOP, 80)
+## 
+##         panel.SetSizer(sizer)
+## 	if self.manager:
+## 		self.CenterOnParent()
+##         panel.Fit()
+##         self.Show()
+## 
+##     def gatherData(self, data, headers, extraData):
+##         global LASTPATH
+##         #Outputs are array, headers, filenam
+##         if self.doNumpy.GetValue():
+##             dlg = wx.FileDialog(self, 'Export Pickled numpy Data', LASTPATH, "", "Pickled Data (*.pnp)|*.pnp", wx.SAVE)
+##             if dlg.ShowModal() == wx.ID_OK and dlg.GetFilename():
+##                 filename = dlg.GetPath()
+##                 LASTPATH = os.path.dirname(filename)
+##                 pickleArray(data, headers, extraData, filename)
+##         if self.doMATLAB.GetValue():
+##             dlg = wx.FileDialog(self, 'Export MATLAB Data', LASTPATH, "", "MATLAB Data (*.mat)|*.mat", wx.SAVE)
+##             if dlg.ShowModal() == wx.ID_OK and dlg.GetFilename():
+##                 filename = dlg.GetPath()
+##                 LASTPATH = os.path.dirname(filename)
+##                 matlabifyArray(data, headers, extraData, filename)
+## 
+## 
+##     def showAbout(self, evt):
+##         info = wx.AboutDialogInfo()
+##         mydesc = """OOMMFDecode is an OOMMF postprocessing tool for
+## converting OVF files or batches of same into numpy
+## arrays or MATLAB data files. Just drag and drop.
+## \nOOMMFConvert is part of OOMMFTools."""
+##         mylicense = """OOMMFDecode is free software; you can redistribute it and/or
+## modify it under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 2 of the License, or
+## (at your option) any later version."""
+##         info.SetName("OOMMFDecode")
+##         info.SetVersion("0.8")
+##         info.SetDescription(mydesc)
+##         info.SetLicense(mylicense)
+##         info.SetCopyright('(C) 2010 Mark Mascaro')
+##         info.SetWebSite('http://web.mit.edu/daigohji/projects/OOMMFTools/')
+##         wx.AboutBox(info)
+## 
+##     def onClose(self, evt):
+## 	if self.manager:
+## 	    self.manager.droppedWindow(self)
+## 	self.Destroy()
+## 
+## class SupportDialog(wx.ProgressDialog):
+##     def __init__(self, title, message, **kwargs):
+##         wx.ProgressDialog.__init__(self, title, message, **kwargs)
+##         self._workDone = 0
+##         self.workmax = kwargs["maximum"]
+## 
+##     def workDone(self, delta, newmsg):
+##         self._workDone += delta
+##         self.Update(self._workDone, newmsg)
+## 
+##     def finish(self):
+##         self.Update(self.workmax, "Done!")
+## 
+## ####################
+## # BACKEND DECODING #
+## ####################
 
-        BigFont = wx.Font(16, wx.FONTFAMILY_DEFAULT, style=wx.NORMAL, weight=wx.FONTWEIGHT_BOLD)
-        TinyFont = wx.Font(8, wx.FONTFAMILY_DEFAULT, style=wx.NORMAL, weight=wx.FONTWEIGHT_NORMAL)
+## class OOMMFSelectiveTarget(wx.FileDropTarget):
+##     def __init__(self, parent):
+##         wx.FileDropTarget.__init__(self)
+##         self.parent = parent
+## 
+##     def OnDropFiles(self, x, y, filenames):
+##         oommf = filterOnExtensions(["omf","ovf","oef","ohf"], filenames)
+##         if not oommf or not (self.parent.doNumpy.GetValue() or self.parent.doMATLAB.GetValue()):
+##             return #You got dropped some bad files!
+##         global LASTPATH
+##         LASTPATH = os.path.dirname(oommf[0])
+##         arrays, headers, extra = groupUnpack(oommf, SupportDialog("Decode in Progress", "Decoding...", maximum=len(oommf)))
+## 
+##         #One final step before we're done - let's try to sort based on the sim time
+##         #using a standard decorate-sort-undecorate, with a twist for the variable number of keys
+## 
+##         #Let's start by finding the original indices - making a copy is key
+##         originalTimeIndex = list(extra["SimTime"])
+##         if len(set(extra["MIFSource"])) == 1:
+## 	        if not -1 in extra["SimTime"]:
+## 	        	extra["SimTime"], arrays = zip(*sorted(zip(originalTimeIndex, arrays)))
+## 	        	#Sadly, the cleverness ends here - the rest must be bruteforced.
+## 		        for key in extra:
+## 		        	if not key == "SimTime": #We did that one.
+## 		        		junk, extra[key] = zip(*sorted(zip(originalTimeIndex, extra[key])))
+## 
+##         self.parent.gatherData(arrays, headers, extra)
 
-        self.dt = OOMMFSelectiveTarget(self)
-        self.SetDropTarget(self.dt)
-	self.manager = manager
-
-	self.Bind(wx.EVT_CLOSE, self.onClose)
-
-        #A very simple menubar
-        menubar = wx.MenuBar()
-        about = wx.Menu()
-        about.Append(999, 'About', 'Program information and license')
-        menubar.Append(about, "About")
-        self.SetMenuBar(menubar)
-
-        self.Bind(wx.EVT_MENU, self.showAbout, id=999)
-
-        #NOW we can deal with actual GUI stuff - store a reference for forced resize, if it comes up
-        panel = wx.Panel(self, -1)
-        self.panel = panel
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-
-        titleText = wx.StaticText(panel, -1, "OMF File Decoding")
-        titleText.SetFont(BigFont)
-        sizer.Add(titleText, 0, wx.ALIGN_CENTER | wx.TOP, 24)
-
-        sizer.Add(wx.StaticLine(panel, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 18)
-
-        self.doNumpy = wx.CheckBox(panel, -1, "Create pickled numpy")
-        sizer.Add(self.doNumpy, 0, wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL)
-
-        self.doMATLAB = wx.CheckBox(panel, -1, "Create MATLAB data")
-        sizer.Add(self.doMATLAB, 0, wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL)
-
-        sizer.Add(wx.StaticLine(panel, -1), 0, wx.EXPAND | wx.TOP, 18)
-
-        ins = wx.StaticText(panel, -1, "Drop OOMMF Files Here!")
-        ins.SetFont(BigFont)
-        sizer.Add(ins, 0, wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL | wx.BOTTOM | wx.TOP, 80)
-
-        panel.SetSizer(sizer)
-	if self.manager:
-		self.CenterOnParent()
-        panel.Fit()
-        self.Show()
-
-    def gatherData(self, data, headers, extraData):
-        global LASTPATH
-        #Outputs are array, headers, filenam
-        if self.doNumpy.GetValue():
-            dlg = wx.FileDialog(self, 'Export Pickled numpy Data', LASTPATH, "", "Pickled Data (*.pnp)|*.pnp", wx.SAVE)
-            if dlg.ShowModal() == wx.ID_OK and dlg.GetFilename():
-                filename = dlg.GetPath()
-                LASTPATH = os.path.dirname(filename)
-                pickleArray(data, headers, extraData, filename)
-        if self.doMATLAB.GetValue():
-            dlg = wx.FileDialog(self, 'Export MATLAB Data', LASTPATH, "", "MATLAB Data (*.mat)|*.mat", wx.SAVE)
-            if dlg.ShowModal() == wx.ID_OK and dlg.GetFilename():
-                filename = dlg.GetPath()
-                LASTPATH = os.path.dirname(filename)
-                matlabifyArray(data, headers, extraData, filename)
-
-
-    def showAbout(self, evt):
-        info = wx.AboutDialogInfo()
-        mydesc = """OOMMFDecode is an OOMMF postprocessing tool for
-converting OVF files or batches of same into numpy
-arrays or MATLAB data files. Just drag and drop.
-\nOOMMFConvert is part of OOMMFTools."""
-        mylicense = """OOMMFDecode is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-(at your option) any later version."""
-        info.SetName("OOMMFDecode")
-        info.SetVersion("0.8")
-        info.SetDescription(mydesc)
-        info.SetLicense(mylicense)
-        info.SetCopyright('(C) 2010 Mark Mascaro')
-        info.SetWebSite('http://web.mit.edu/daigohji/projects/OOMMFTools/')
-        wx.AboutBox(info)
-
-    def onClose(self, evt):
-	if self.manager:
-	    self.manager.droppedWindow(self)
-	self.Destroy()
-
-class SupportDialog(wx.ProgressDialog):
-    def __init__(self, title, message, **kwargs):
-        wx.ProgressDialog.__init__(self, title, message, **kwargs)
-        self._workDone = 0
-        self.workmax = kwargs["maximum"]
-
-    def workDone(self, delta, newmsg):
-        self._workDone += delta
-        self.Update(self._workDone, newmsg)
-
-    def finish(self):
-        self.Update(self.workmax, "Done!")
-
-####################
-# BACKEND DECODING #
-####################
-
-class OOMMFSelectiveTarget(wx.FileDropTarget):
-    def __init__(self, parent):
-        wx.FileDropTarget.__init__(self)
-        self.parent = parent
-
-    def OnDropFiles(self, x, y, filenames):
-        oommf = filterOnExtensions(["omf","ovf","oef","ohf"], filenames)
-        if not oommf or not (self.parent.doNumpy.GetValue() or self.parent.doMATLAB.GetValue()):
-            return #You got dropped some bad files!
-        global LASTPATH
-        LASTPATH = os.path.dirname(oommf[0])
-        arrays, headers, extra = groupUnpack(oommf, SupportDialog("Decode in Progress", "Decoding...", maximum=len(oommf)))
-
-        #One final step before we're done - let's try to sort based on the sim time
-        #using a standard decorate-sort-undecorate, with a twist for the variable number of keys
-
-        #Let's start by finding the original indices - making a copy is key
-        originalTimeIndex = list(extra["SimTime"])
-        if len(set(extra["MIFSource"])) == 1:
-	        if not -1 in extra["SimTime"]:
-	        	extra["SimTime"], arrays = zip(*sorted(zip(originalTimeIndex, arrays)))
-	        	#Sadly, the cleverness ends here - the rest must be bruteforced.
-		        for key in extra:
-		        	if not key == "SimTime": #We did that one.
-		        		junk, extra[key] = zip(*sorted(zip(originalTimeIndex, extra[key])))
-
-        self.parent.gatherData(arrays, headers, extra)
-
-def groupUnpack(targetlist, progdialog = None):
-    decodedArrays = []
-    headers = {}
-    extraData = defaultdict(list)
-    firstTime = True
-    try:
-        for target in targetlist:
-                collect = unpackFile(target)
-                if firstTime:
-                     firstTime = False
-                     headers = collect[1]
-                decodedArrays.append(collect[0])
-                #Unpack extra collected data
-                for key, value in collect[2].iteritems():
-                     extraData[key].append(value)
-                if progdialog:
-                     progdialog.workDone(1, "Decoding...")
-                     time.sleep(0.01) #Should facilitate redraw thread coming to life
-
-    except Exception as e:
-            if progdialog: progdialog.finish()
-            wx.MessageBox('Unpacking error: ' + repr(e), "Error")
-            print e
-    else:
-            if progdialog: progdialog.finish()
-    return (np.array(decodedArrays), headers, extraData)
+# def groupUnpack(targetlist, progdialog = None):
+#     decodedArrays = []
+#     headers = {}
+#     extraData = defaultdict(list)
+#     firstTime = True
+#     try:
+#         for target in targetlist:
+#                 collect = unpackFile(target)
+#                 if firstTime:
+#                      firstTime = False
+#                      headers = collect[1]
+#                 decodedArrays.append(collect[0])
+#                 #Unpack extra collected data
+#                 for key, value in collect[2].iteritems():
+#                      extraData[key].append(value)
+#                 if progdialog:
+#                      progdialog.workDone(1, "Decoding...")
+#                      time.sleep(0.01) #Should facilitate redraw thread coming to life
+# 
+#     except Exception as e:
+#             if progdialog: progdialog.finish()
+#             wx.MessageBox('Unpacking error: ' + repr(e), "Error")
+#             print e
+#     else:
+#             if progdialog: progdialog.finish()
+#     return (np.array(decodedArrays), headers, extraData)
 
 def unpackFile(filename):
     with open(filename, 'rb') as f:

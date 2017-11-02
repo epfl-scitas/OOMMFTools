@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 omf2mat.py
 
